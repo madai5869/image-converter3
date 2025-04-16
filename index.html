@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>かんたん画像変換ツール（PNG/JPEG/SVG → WEBP）</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: "Hiragino Sans", "Meiryo", sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      font-size: 24px;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+    .description {
+      background-color: #eef7ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    .upload-area {
+      background-color: #fff;
+      border: 2px dashed #3498db;
+      border-radius: 8px;
+      padding: 30px;
+      text-align: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .upload-area:hover {
+      background-color: #f0f8ff;
+      border-color: #2980b9;
+    }
+    .upload-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+      color: #3498db;
+    }
+    .btn {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 0;
+      width: 100%;
+      transition: background-color 0.3s;
+    }
+    .btn:hover {
+      background-color: #2980b9;
+    }
+    .result {
+      margin-top: 30px;
+      text-align: center;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .result img {
+      max-width: 100%;
+      max-height: 400px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+    .info {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      text-align: left;
+    }
+    .hidden {
+      display: none;
+    }
+    .quality {
+      margin: 20px 0;
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .quality-label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+    .file-type {
+      margin-top: 5px;
+      font-size: 14px;
+      color: #666;
+    }
+    footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 12px;
+      color: #777;
+    }
+    .error-message {
+      color: #e74c3c;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .formats {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .format-badge {
+      background-color: #3498db;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>かんたん画像変換ツール（PNG/JPEG/SVG → WEBP）</h1>
+  
+  <div class="description">
+    <p>このツールは、PNG、JPEG、SVG形式の画像をWEBP形式に変換します。WebP形式は従来の画像形式と比較して、高い圧縮率と画質を両立した次世代の画像形式です。</p>
+    <div class="formats">
+      <span class="format-badge">PNG</span>
+      <span class="format-badge">JPEG</span>
+      <span class="format-badge">SVG</span>
+      <span>→</span>
+      <span class="format-badge">WEBP</span>
+    </div>
+  </div>
+  
+  <div class="upload-area" id="uploadArea">
+    <div class="upload-icon">📁</div>
+    <p>ここをクリックするか、画像ファイルをドラッグ＆ドロップしてください</p>
+    <p class="file-type">対応形式: PNG, JPEG, SVG</p>
+  </div>
+  
+  <input type="file" id="fileInput" accept="image/png,image/jpeg,image/svg+xml" class="hidden">
+  
+  <div class="quality">
+    <label class="quality-label">WebP画質設定: <span id="qualityValue">75</span>%</label>
+    <input type="range" id="qualitySlider" min="1" max="100" value="75" style="width: 100%;">
+  </div>
+  
+  <div class="result hidden" id="resultArea">
+    <h2>変換結果</h2>
+    <img id="resultImage" src="" alt="変換された画像">
+    <div class="info">
+      <p>元のファイル: <span id="originalFileName">-</span></p>
+      <p>元の形式: <span id="originalFormat">-</span></p>
+      <p>元のサイズ: <span id="originalSize">0</span> KB</p>
+      <p>変換後のサイズ: <span id="convertedSize">0</span> KB</p>
+      <p>削減率: <span id="savingRate">0</span>%</p>
+    </div>
+    <a id="downloadLink" class="btn" download="converted.webp">WebP画像をダウンロード</a>
+  </div>
+  
+  <div id="errorMessage" class="error-message hidden"></div>
+  
+  <footer>
+    © 2025 かんたん画像変換ツール | PNG/JPEG/SVG → WEBP
+  </footer>
+  
+  <script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const resultArea = document.getElementById('resultArea');
+    const resultImage = document.getElementById('resultImage');
+    const downloadLink = document.getElementById('downloadLink');
+    const qualitySlider = document.getElementById('qualitySlider');
+    const qualityValue = document.getElementById('qualityValue');
+    const originalSize = document.getElementById('originalSize');
+    const convertedSize = document.getElementById('convertedSize');
+    const savingRate = document.getElementById('savingRate');
+    const originalFileName = document.getElementById('originalFileName');
+    const originalFormat = document.getElementById('originalFormat');
+    const errorMessage = document.getElementById('errorMessage');
+    
+    let originalFile = null;
+    
+    // アップロードエリアのクリックでファイル選択
+    uploadArea.addEventListener('click', () => {
+      fileInput.click();
+    });
+    
+    // ファイル選択時の処理
+    fileInput.addEventListener('change', handleFile);
+    
+    // ドラッグ&ドロップの処理
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.style.backgroundColor = '#eef7ff';
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.style.backgroundColor = '#fff';
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.style.backgroundColor = '#fff';
+      
+      if (e.dataTransfer.files.length > 0) {
+        const file = e.dataTransfer.files[0];
+        if (isValidFileType(file)) {
+          fileInput.files = e.dataTransfer.files;
+          handleFile({ target: fileInput });
+        } else {
+          showError('PNG、JPEG、またはSVG形式のファイルを選択してください');
+        }
+      }
+    });
+    
+    // 品質スライダーの変更時に再変換
+    qualitySlider.addEventListener('input', () => {
+      qualityValue.textContent = qualitySlider.value;
+      if (originalFile) {
+        convertImage(originalFile);
+      }
+    });
+    
+    function isValidFileType(file) {
+      return file.type === 'image/png' || 
+             file.type === 'image/jpeg' || 
+             file.type === 'image/svg+xml';
+    }
+    
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.classList.remove('hidden');
+      setTimeout(() => {
+        errorMessage.classList.add('hidden');
+      }, 5000);
+    }
+    
+    function handleFile(e) {
+      if (e.target.files.length > 0) {
+        const file = e.target.files[0];
+        
+        if (!isValidFileType(file)) {
+          showError('PNG、JPEG、またはSVG形式のファイルを選択してください');
+          return;
+        }
+        
+        originalFile = file;
+        originalFileName.textContent = file.name;
+        
+        // ファイル形式を表示
+        if (file.type === 'image/png') {
+          originalFormat.textContent = 'PNG';
+        } else if (file.type === 'image/jpeg') {
+          originalFormat.textContent = 'JPEG';
+        } else if (file.type === 'image/svg+xml') {
+          originalFormat.textContent = 'SVG';
+        }
+        
+        convertImage(file);
+      }
+    }
+    
+    function convertImage(file) {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        const img = new Image();
+        
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // SVGの場合、適切なサイズに設定
+          if (file.type === 'image/svg+xml') {
+            // SVGは任意のサイズでレンダリングできるので、適切なサイズを設定
+            canvas.width = img.width || 800;  // デフォルトサイズを設定
+            canvas.height = img.height || 600;
+          } else {
+            canvas.width = img.width;
+            canvas.height = img.height;
+          }
+          
+          // 背景を白で塗りつぶす（透明部分がある場合に対応）
+          if (file.type === 'image/svg+xml') {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+          
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          
+          const quality = qualitySlider.value / 100;
+          const webpDataUrl = canvas.toDataURL('image/webp', quality);
+          
+          resultImage.src = webpDataUrl;
+          downloadLink.href = webpDataUrl;
+          
+          // ファイル名を元のファイル名をベースにする
+          const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+          downloadLink.download = `${originalName}.webp`;
+          
+          // ファイルサイズ計算
+          const origKB = Math.round(file.size / 1024 * 10) / 10;
+          originalSize.textContent = origKB;
+          
+          // WebPサイズ計算（Base64データから推定）
+          const base64 = webpDataUrl.split(',')[1];
+          const webpBytes = Math.ceil((base64.length * 3) / 4);
+          const webpKB = Math.round(webpBytes / 1024 * 10) / 10;
+          convertedSize.textContent = webpKB;
+          
+          // 削減率計算
+          const savePercent = Math.round((1 - (webpBytes / file.size)) * 100);
+          savingRate.textContent = savePercent;
+          
+          resultArea.classList.remove('hidden');
+        };
+        
+        img.onerror = () => {
+          showError('画像の読み込みに失敗しました。ファイルが破損している可能性があります。');
+        };
+        
+        img.src = e.target.result;
+      };
+      
+      reader.onerror = () => {
+        showError('ファイルの読み込みに失敗しました。');
+      };
+      
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>
